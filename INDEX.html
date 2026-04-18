@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>משחק אוצר מילים • תעודה חכמה</title>
+  <style>
+    :root{
+      --bg1:#e0f2fe;
+      --bg2:#eff6ff;
+      --card:#ffffff;
+      --primary:#2563eb;
+      --primary-dark:#1d4ed8;
+      --accent:#facc15;
+      --accent-dark:#eab308;
+      --text:#0f172a;
+      --muted:#64748b;
+      --ok-bg:#dcfce7;
+      --ok-text:#166534;
+      --bad-bg:#fee2e2;
+      --bad-text:#991b1b;
+      --soft:#f8fafc;
+      --border:#cbd5e1;
+      --credit:#111827;
+      --shadow:0 12px 30px rgba(15,23,42,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:linear-gradient(to bottom,var(--bg1),var(--bg2));
+      color:var(--text);
+      min-height:100vh;
+      padding:16px;
+    }
+    .app{
+      max-width:980px;
+      margin:0 auto;
+      background:var(--card);
+      border:1px solid #bae6fd;
+      border-radius:28px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+    }
+    .credit{
+      background:var(--credit);
+      color:#fff;
+      text-align:center;
+      padding:10px 12px;
+      font-size:14px;
+      font-weight:700;
+    }
+    .hero{
+      background:linear-gradient(to left,#2563eb,#06b6d4);
+      color:#fff;
+      text-align:center;
+      padding:24px 16px 28px;
+    }
+    .hero .icon{font-size:42px;margin-bottom:8px}
+    .hero h1{margin:0;font-size:clamp(28px,4vw,42px);line-height:1.15}
+    .hero p{margin:10px 0 0;font-size:clamp(14px,2vw,18px);line-height:1.5}
+    .content{padding:16px}
+    .chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px}
+    .chip{background:#f1f5f9;color:#334155;padding:10px 14px;border-radius:14px;font-size:14px;font-weight:700}
+    .chip.orange{background:#ffedd5;color:#9a3412}
+    .chip.green{background:#dcfce7;color:#166534}
+    .progress-card{background:var(--soft);border:1px solid #e2e8f0;border-radius:18px;padding:14px;margin-bottom:16px}
+    .progress-head{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--muted);font-size:14px;margin-bottom:8px}
+    .bar{width:100%;height:12px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+    .bar-fill{height:100%;width:0%;background:var(--primary);transition:width .35s ease}
+    .mode-screen{text-align:center;padding:20px 8px 8px}
+    .mode-screen h2{margin:0 0 18px;font-size:30px}
+    .mode-buttons,.actions,.summary-buttons{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+    .student-box{max-width:520px;margin:0 auto 18px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:20px;padding:16px}
+    .student-box label{display:block;font-weight:700;margin-bottom:8px}
+    .student-box input{width:100%;border:2px solid var(--border);border-radius:16px;padding:13px 14px;font-size:16px;text-align:right}
+    .question-card{background:#eff6ff;border:1px solid #dbeafe;border-radius:24px;padding:20px 16px;text-align:center}
+    .question-label{color:#64748b;font-size:14px;margin-bottom:8px}
+    .question-word{font-size:clamp(34px,7vw,58px);color:#1d4ed8;font-weight:700;word-break:break-word}
+    .answer-area{margin-top:18px}
+    .answer-area input{width:100%;border:2px solid var(--border);border-radius:18px;padding:14px 16px;font-size:18px;text-align:right;outline:none}
+    .answer-area input:focus,.student-box input:focus{border-color:#60a5fa}
+    button{border:none;border-radius:14px;padding:13px 22px;font-size:16px;font-weight:700;cursor:pointer;transition:.2s ease}
+    button:hover{transform:translateY(-1px)}
+    button:disabled{cursor:not-allowed;transform:none;opacity:.7}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-primary:hover{background:var(--primary-dark)}
+    .btn-accent{background:var(--accent);color:#111827}
+    .btn-accent:hover{background:var(--accent-dark)}
+    .btn-dark{background:#334155;color:#fff}
+    .btn-orange{background:#f97316;color:#fff}
+    .btn-muted{background:#cbd5e1;color:#475569}
+    .btn-green{background:#16a34a;color:#fff}
+    .hint{margin-top:14px;color:#a16207;font-weight:700}
+    .feedback{margin-top:14px;padding:12px 14px;border-radius:16px;font-weight:700;text-align:center;display:none}
+    .feedback.ok{display:block;background:var(--ok-bg);color:var(--ok-text)}
+    .feedback.bad{display:block;background:var(--bad-bg);color:var(--bad-text)}
+    .stats{margin-top:18px;display:grid;grid-template-columns:1fr;gap:12px}
+    .stat{background:var(--soft);border:1px solid #e2e8f0;border-radius:18px;padding:14px;text-align:center}
+    .stat .label{font-size:14px;color:var(--muted)}
+    .stat .value{margin-top:6px;font-size:28px;font-weight:700;color:#1e293b}
+    .teacher-box{margin-top:18px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:14px}
+    .teacher-box h3{margin:0 0 12px;font-size:18px}
+    .teacher-grid{display:grid;grid-template-columns:1fr;gap:10px}
+    .teacher-grid input{width:100%;border:2px solid var(--border);border-radius:14px;padding:12px 14px;font-size:15px}
+
+    .certificate-wrap{display:none}
+    .certificate{
+      width:1123px;
+      min-height:794px;
+      background:white;
+      margin:0 auto;
+      border:10px solid #2563eb;
+      position:relative;
+      padding:40px 52px;
+      direction:rtl;
+      font-family:Arial,sans-serif;
+      color:#0f172a;
+    }
+    .certificate::before{
+      content:"";
+      position:absolute;
+      inset:14px;
+      border:2px solid #93c5fd;
+      pointer-events:none;
+    }
+    .cert-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+    .cert-brand{font-size:14px;font-weight:700;color:#334155}
+    .cert-qr{width:120px;height:120px;border:1px solid #cbd5e1;padding:6px;background:#fff}
+    .cert-title{text-align:center;margin-top:20px}
+    .cert-title h1{margin:0;font-size:46px;color:#1d4ed8}
+    .cert-title p{margin:8px 0 0;font-size:20px;color:#475569}
+    .cert-name{text-align:center;margin-top:30px;font-size:38px;font-weight:700;color:#111827}
+    .cert-body{text-align:center;margin-top:22px;font-size:24px;line-height:1.8}
+    .cert-score{display:inline-block;background:#eff6ff;border:1px solid #bfdbfe;border-radius:18px;padding:10px 18px;margin-top:18px;font-size:28px;font-weight:700;color:#1d4ed8}
+    .cert-msg{text-align:center;margin-top:22px;font-size:22px;color:#166534;font-weight:700}
+    .cert-details{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:34px}
+    .cert-detail{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:14px;text-align:center}
+    .cert-detail .label{font-size:14px;color:#64748b}
+    .cert-detail .value{margin-top:6px;font-size:22px;font-weight:700}
+    .cert-bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:46px;gap:20px}
+    .sig-box{text-align:center;min-width:280px}
+    .sig-line{border-top:2px solid #94a3b8;margin-top:34px;padding-top:10px;font-size:14px;color:#475569}
+    .sig-digital{font-family:"Brush Script MT",cursive;font-size:40px;color:#0f766e;line-height:1}
+    .sig-note{font-size:12px;color:#64748b;margin-top:6px}
+    .cert-footer-note{text-align:left;font-size:14px;color:#475569}
+
+    @media (min-width:640px){
+      .content{padding:20px}
+      .stats{grid-template-columns:repeat(3,1fr)}
+      .teacher-grid{grid-template-columns:1fr 1fr}
+      .mode-buttons button,.actions button,.summary-buttons button{width:auto}
+    }
+    @media (max-width:639px){
+      .mode-buttons button,.actions button,.summary-buttons button{width:100%}
+      .hero{padding:22px 14px 24px}
+      .content{padding:14px}
+    }
+
+    @media print{
+      body{background:white;padding:0}
+      body *{visibility:hidden}
+      .certificate-wrap,.certificate-wrap *{visibility:visible}
+      .certificate-wrap{display:block !important;position:absolute;left:0;top:0;width:100%}
+      .certificate{border-width:8px;box-shadow:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="credit">Created By: Ali Dallasheh Systems 2026</div>
+
+    <div class="hero">
+      <div class="icon">📘</div>
+      <h1 id="title"></h1>
+      <p id="subtitle"></p>
+    </div>
+
+    <div class="content">
+      <div id="modeScreen" class="mode-screen">
+        <div class="student-box">
+          <label for="studentNameInput" id="studentNameLabel"></label>
+          <input id="studentNameInput" type="text" />
+        </div>
+
+        <h2 id="chooseModeText"></h2>
+        <div class="mode-buttons">
+          <button class="btn-primary" id="testBtn"></button>
+          <button class="btn-accent" id="practiceBtn"></button>
+        </div>
+      </div>
+
+      <div id="gameScreen" style="display:none;">
+        <div class="chips">
+          <div class="chip" id="modeChip"></div>
+          <div class="chip orange" id="retryChip" style="display:none;"></div>
+          <div class="chip green" id="studentChip"></div>
+        </div>
+
+        <div class="progress-card">
+          <div class="progress-head">
+            <span id="progressLabel"></span>
+            <span id="progressCount"></span>
+          </div>
+          <div class="bar"><div class="bar-fill" id="progressBar"></div></div>
+        </div>
+
+        <div id="playSection">
+          <div class="question-card">
+            <div class="question-label" id="englishWordLabel"></div>
+            <div class="question-word" id="currentWord"></div>
+          </div>
+
+          <div class="answer-area">
+            <input id="answerInput" type="text" />
+            <div class="actions">
+              <button class="btn-primary" id="checkBtn"></button>
+              <button class="btn-accent" id="hintBtn"></button>
+            </div>
+            <div class="hint" id="hintText" style="display:none;"></div>
+            <div class="feedback" id="feedbackBox"></div>
+          </div>
+        </div>
+
+        <div id="doneSection" style="display:none;text-align:center;">
+          <div class="feedback ok" id="doneMessage" style="display:block;"></div>
+          <div class="summary-buttons">
+            <button class="btn-primary" id="restartBtn"></button>
+            <button class="btn-orange" id="retryMistakesBtn"></button>
+            <button class="btn-dark" id="backModesBtn"></button>
+            <button class="btn-green" id="printCertBtn"></button>
+            <button class="btn-accent" id="sendTeacherBtn"></button>
+          </div>
+
+          <div class="teacher-box">
+            <h3 id="teacherBoxTitle"></h3>
+            <div class="teacher-grid">
+              <input id="teacherEmailInput" type="email" />
+              <input id="teacherNameInput" type="text" />
+            </div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label" id="scoreLabel"></div>
+            <div class="value" id="scoreValue">0</div>
+          </div>
+          <div class="stat">
+            <div class="label" id="mistakesLabel"></div>
+            <div class="value" id="mistakesValue">0</div>
+          </div>
+          <div class="stat">
+            <div class="label" id="wordsCountLabel"></div>
+            <div class="value" id="wordsCountValue">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="certificate-wrap" id="certificateWrap">
+    <div class="certificate" id="certificate">
+      <div class="cert-top">
+        <div class="cert-brand">Created By: Ali Dallasheh Systems 2026</div>
+        <img id="qrImage" class="cert-qr" alt="QR Code" />
+      </div>
+
+      <div class="cert-title">
+        <h1>תעודת סיום</h1>
+        <p>Vocabulary Completion Certificate</p>
+      </div>
+
+      <div class="cert-name" id="certStudentName"></div>
+
+      <div class="cert-body">
+        מוענקת בזאת על השלמת פעילות אוצר מילים באנגלית בהצלחה<br>
+        ועל התמדה, השקעה והשתתפות פעילה בלמידה
+        <div class="cert-score" id="certScore"></div>
+      </div>
+
+      <div class="cert-msg" id="certMessage"></div>
+
+      <div class="cert-details">
+        <div class="cert-detail"><div class="label">תאריך</div><div class="value" id="certDate"></div></div>
+        <div class="cert-detail"><div class="label">מצב פעילות</div><div class="value" id="certMode"></div></div>
+        <div class="cert-detail"><div class="label">מספר טעויות</div><div class="value" id="certMistakes"></div></div>
+        <div class="cert-detail"><div class="label">מספר מילים</div><div class="value" id="certWords"></div></div>
+      </div>
+
+      <div class="cert-bottom">
+        <div class="sig-box">
+          <div class="sig-digital" id="digitalSignature">Ali Dallasheh</div>
+          <div class="sig-line">חתימה דיגיטלית</div>
+          <div class="sig-note">נוצרה אוטומטית במערכת</div>
+        </div>
+        <div class="cert-footer-note">QR לאימות תוצאת ההשתתפות</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const translations = {
+      he: {
+        title: "משחק אוצר מילים",
+        subtitle: "אנגלית לעברית • כיתה ד׳ • תרגול עם רמזים",
+        chooseMode: "בחר מצב פעילות",
+        studentNameLabel: "שם התלמיד",
+        studentNamePlaceholder: "כתוב כאן את שם התלמיד",
+        test: "מבחן",
+        practice: "תרגול",
+        mode: "מצב",
+        retryMode: "חזרה על טעויות",
+        progress: "התקדמות",
+        englishWord: "המילה באנגלית",
+        inputPlaceholder: "כתוב כאן את התרגום",
+        check: "בדוק תשובה",
+        hint: "רמז",
+        scoreCurrent: "ציון נוכחי",
+        scoreOriginal: "ציון מקורי",
+        mistakes: "טעויות",
+        wordsCount: "מספר מילים",
+        restart: "התחל מחדש",
+        retryMistakes: "חזרה על טעויות",
+        backToModes: "חזרה לבחירת מצב",
+        printCert: "הדפס תעודה",
+        sendTeacher: "שלח למורה",
+        teacherBoxTitle: "פרטי מורה לקבלת התוצאה",
+        teacherEmailPlaceholder: "מייל המורה",
+        teacherNamePlaceholder: "שם המורה / החותם",
+        exactCorrect: "נכון מאוד!",
+        nearCorrectPrefix: "✔️ נכון, אבל התרגום המדויק הוא: ",
+        wrongPrefix: "❌ לא נכון: ",
+        hintPrefix: "💡 ",
+        doneFinalPrefix: "🎉 סיימת! ציון סופי: ",
+        doneRetryPrefix: "סיימת חזרה על טעויות. הציון המקורי נשאר: ",
+        modeTestValue: "מבחן",
+        modePracticeValue: "תרגול",
+        defaultStudentName: "תלמיד",
+        shareMessageTitle: "סיכום פעילות אוצר מילים",
+        emailSubject: "תוצאת תלמיד בפעילות אוצר מילים",
+        teacherSentAlert: "נפתחה טיוטת מייל עם התוצאה למורה.",
+        noTeacherEmail: "יש להזין מייל של מורה.",
+        encouragementHigh: "כל הכבוד! הפגנת ידע מצוין והתמדה נהדרת.",
+        encouragementMid: "עבודה יפה מאוד. המשך כך וההצלחה תמשיך לגדול.",
+        encouragementLow: "כל הכבוד על ההשתתפות. כל תרגול מקדם אותך ומשפר אותך."
+      },
+      ar: {},
+      en: {}
+    };
+
+    const currentLang = "he";
+    const t = translations[currentLang];
+
+    const words = [
+      { en: "City", he: "עיר", hint: "מקום גדול עם בתים ואנשים" },
+      { en: "Hospital", he: "בית חולים", hint: "מקום שמטפלים בו בחולים" },
+      { en: "Library", he: "ספרייה", hint: "מקום עם הרבה ספרים" },
+      { en: "Park", he: "פארק", hint: "מקום ירוק עם משחקים" },
+      { en: "Street", he: "רחוב", hint: "מקום שבו נוסעות מכוניות" },
+      { en: "Town", he: "עיירה", hint: "מקום קטן יותר מעיר" },
+      { en: "Beach", he: "חוף", hint: "מקום ליד הים" },
+      { en: "Ears", he: "אוזניים", hint: "האיבר שבעזרתו שומעים" },
+      { en: "Feet", he: "רגליים", hint: "החלק התחתון של הגוף" },
+      { en: "Cheese", he: "גבינה", hint: "מאכל שמכינים מחלב" },
+      { en: "Coffee", he: "קפה", hint: "משקה חם" },
+      { en: "Green", he: "ירוק", hint: "הצבע של הדשא" },
+      { en: "Queen", he: "מלכה", hint: "אישה ששולטת" },
+      { en: "Sleep", he: "לישון", hint: "מה עושים בלילה" },
+      { en: "Street", he: "רחוב", hint: "כביש בעיר" },
+      { en: "Teeth", he: "שיניים", hint: "יש בפה" },
+      { en: "Tree", he: "עץ", hint: "צמח גדול" },
+      { en: "Clean", he: "נקי", hint: "לא מלוכלך" },
+      { en: "Eat", he: "לאכול", hint: "מה עושים עם אוכל" },
+      { en: "Meat", he: "בשר", hint: "אוכל מן החי" },
+      { en: "Please", he: "בבקשה", hint: "מילה מנומסת" },
+      { en: "Read", he: "לקרוא", hint: "מה שעושים עם ספר" },
+      { en: "Tea", he: "תה", hint: "משקה חם" },
+      { en: "Teacher", he: "מורה", hint: "מלמד בכיתה" },
+      { en: "Doctor", he: "רופא", hint: "מטפל בחולים" },
+      { en: "People", he: "אנשים", hint: "הרבה בני אדם" },
+      { en: "Police", he: "משטרה", hint: "שומרים על החוק" },
+      { en: "Neighbor", he: "שכן", hint: "גר לידך" },
+      { en: "Airplane", he: "מטוס", hint: "טס בשמיים" },
+      { en: "Hair", he: "שיער", hint: "על הראש" },
+      { en: "Rain", he: "גשם", hint: "מים מהשמיים" },
+      { en: "Train", he: "רכבת", hint: "נוסעת על מסילה" },
+      { en: "Wait", he: "לחכות", hint: "להישאר במקום" },
+      { en: "Birthday", he: "יום הולדת", hint: "חוגגים כל שנה" },
+      { en: "Chair", he: "כיסא", hint: "יושבים עליו" },
+      { en: "Crayons", he: "צבעים", hint: "לציור" },
+      { en: "Gray", he: "אפור", hint: "בין שחור ללבן" },
+      { en: "Play", he: "לשחק", hint: "משחקים" },
+      { en: "Today", he: "היום", hint: "לא אתמול" },
+      { en: "Boat", he: "סירה", hint: "במים" },
+      { en: "Car", he: "מכונית", hint: "נוסעים בה" },
+      { en: "Drive", he: "לנהוג", hint: "מה שעושים במכונית" },
+      { en: "Fly", he: "לעוף", hint: "באוויר" },
+      { en: "Walk", he: "ללכת", hint: "ברגל" },
+      { en: "By bus", he: "באוטובוס", hint: "תחבורה ציבורית" },
+      { en: "By car", he: "במכונית", hint: "רכב פרטי" },
+      { en: "By train", he: "ברכבת", hint: "מסילה" },
+      { en: "Cloud", he: "ענן", hint: "בשמיים" },
+      { en: "Cow", he: "פרה", hint: "נותנת חלב" },
+      { en: "Flower", he: "פרח", hint: "צמח יפה" },
+      { en: "Outside", he: "בחוץ", hint: "לא בבית" },
+      { en: "Brown", he: "חום", hint: "צבע אדמה" },
+      { en: "House", he: "בית", hint: "מקום שגרים" },
+      { en: "Mouth", he: "פה", hint: "אוכלים" },
+      { en: "Town", he: "עיירה", hint: "קטן מעיר" },
+      { en: "Behind", he: "מאחורי", hint: "לא מלפנים" },
+      { en: "In front of", he: "לפני", hint: "ממול" },
+      { en: "To the right of", he: "מימין", hint: "ימין" },
+      { en: "To the left of", he: "משמאל", hint: "שמאל" },
+      { en: "Important", he: "חשוב", hint: "דבר משמעותי" },
+      { en: "Safe", he: "בטוח", hint: "ללא סכנה" },
+      { en: "Sign", he: "שלט", hint: "מידע" },
+      { en: "Traffic light", he: "רמזור", hint: "אדום צהוב ירוק" },
+      { en: "Cross the street", he: "לחצות את הרחוב", hint: "לעבור כביש" }
+    ];
+
+    const state = {
+      mode: null,
+      activeWords: [...words],
+      index: 0,
+      score: 0,
+      finalScore: null,
+      mistakes: [],
+      mistakeCount: 0,
+      done: false,
+      retryMode: false,
+      studentName: "",
+      teacherEmail: "",
+      teacherName: "Ali Dallasheh"
+    };
+
+    const els = {
+      title: document.getElementById("title"),
+      subtitle: document.getElementById("subtitle"),
+      chooseModeText: document.getElementById("chooseModeText"),
+      studentNameLabel: document.getElementById("studentNameLabel"),
+      studentNameInput: document.getElementById("studentNameInput"),
+      testBtn: document.getElementById("testBtn"),
+      practiceBtn: document.getElementById("practiceBtn"),
+      modeScreen: document.getElementById("modeScreen"),
+      gameScreen: document.getElementById("gameScreen"),
+      modeChip: document.getElementById("modeChip"),
+      retryChip: document.getElementById("retryChip"),
+      studentChip: document.getElementById("studentChip"),
+      progressLabel: document.getElementById("progressLabel"),
+      progressCount: document.getElementById("progressCount"),
+      progressBar: document.getElementById("progressBar"),
+      englishWordLabel: document.getElementById("englishWordLabel"),
+      currentWord: document.getElementById("currentWord"),
+      answerInput: document.getElementById("answerInput"),
+      checkBtn: document.getElementById("checkBtn"),
+      hintBtn: document.getElementById("hintBtn"),
+      hintText: document.getElementById("hintText"),
+      feedbackBox: document.getElementById("feedbackBox"),
+      playSection: document.getElementById("playSection"),
+      doneSection: document.getElementById("doneSection"),
+      doneMessage: document.getElementById("doneMessage"),
+      restartBtn: document.getElementById("restartBtn"),
+      retryMistakesBtn: document.getElementById("retryMistakesBtn"),
+      backModesBtn: document.getElementById("backModesBtn"),
+      printCertBtn: document.getElementById("printCertBtn"),
+      sendTeacherBtn: document.getElementById("sendTeacherBtn"),
+      teacherBoxTitle: document.getElementById("teacherBoxTitle"),
+      teacherEmailInput: document.getElementById("teacherEmailInput"),
+      teacherNameInput: document.getElementById("teacherNameInput"),
+      scoreLabel: document.getElementById("scoreLabel"),
+      scoreValue: document.getElementById("scoreValue"),
+      mistakesLabel: document.getElementById("mistakesLabel"),
+      mistakesValue: document.getElementById("mistakesValue"),
+      wordsCountLabel: document.getElementById("wordsCountLabel"),
+      wordsCountValue: document.getElementById("wordsCountValue"),
+      qrImage: document.getElementById("qrImage"),
+      certStudentName: document.getElementById("certStudentName"),
+      certScore: document.getElementById("certScore"),
+      certMessage: document.getElementById("certMessage"),
+      certDate: document.getElementById("certDate"),
+      certMode: document.getElementById("certMode"),
+      certMistakes: document.getElementById("certMistakes"),
+      certWords: document.getElementById("certWords"),
+      digitalSignature: document.getElementById("digitalSignature")
+    };
+
+    function normalize(text) {
+      return text.trim().replace(/\s+/g, " ").replace(/^ה/, "").replace(/ך/g, "כ").replace(/ם/g, "מ").replace(/ן/g, "נ").replace(/ף/g, "פ").replace(/ץ/g, "צ");
+    }
+
+    function isAcceptableAnswer(userAnswer, correctAnswer) {
+      const user = normalize(userAnswer);
+      const correct = normalize(correctAnswer);
+      if (user === correct) return { ok: true, exact: true };
+      if (correct.includes("רגל") && user.includes("רגל")) return { ok: true, exact: false };
+      return { ok: false, exact: false };
+    }
+
+    function getTodayString() {
+      return new Date().toLocaleDateString("he-IL");
+    }
+
+    function getModeLabel() {
+      return state.mode === "test" ? t.modeTestValue : t.modePracticeValue;
+    }
+
+    function getStudentName() {
+      return state.studentName && state.studentName.trim() ? state.studentName.trim() : t.defaultStudentName;
+    }
+
+    function getEncouragement(score, total) {
+      const percent = Math.round((score / total) * 100);
+      if (percent >= 90) return t.encouragementHigh;
+      if (percent >= 70) return t.encouragementMid;
+      return t.encouragementLow;
+    }
+
+    function getCertificateData() {
+      const score = state.finalScore ?? state.score;
+      return {
+        studentName: getStudentName(),
+        score: score,
+        total: words.length,
+        mistakes: state.mistakeCount,
+        mode: getModeLabel(),
+        date: getTodayString(),
+        message: getEncouragement(score, words.length)
+      };
+    }
+
+    function buildQrText() {
+      const data = getCertificateData();
+      return [
+        "Certificate Verification",
+        "Student: " + data.studentName,
+        "Score: " + data.score + "/" + data.total,
+        "Mistakes: " + data.mistakes,
+        "Mode: " + data.mode,
+        "Date: " + data.date,
+        "Created By: Ali Dallasheh Systems 2026"
+      ].join(" | ");
+    }
+
+    function buildQrUrl() {
+      const qrText = encodeURIComponent(buildQrText());
+      return "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + qrText;
+    }
+
+    function fillCertificate() {
+      const data = getCertificateData();
+      els.certStudentName.textContent = data.studentName;
+      els.certScore.textContent = data.score + " / " + data.total;
+      els.certMessage.textContent = data.message;
+      els.certDate.textContent = data.date;
+      els.certMode.textContent = data.mode;
+      els.certMistakes.textContent = data.mistakes;
+      els.certWords.textContent = data.total;
+      els.digitalSignature.textContent = state.teacherName && state.teacherName.trim() ? state.teacherName.trim() : "Ali Dallasheh";
+      els.qrImage.src = buildQrUrl();
+    }
+
+    function resetForNext() {
+      els.answerInput.value = "";
+      els.hintText.style.display = "none";
+      els.hintText.textContent = "";
+      clearFeedback();
+    }
+
+    function setFeedback(message, kind) {
+      els.feedbackBox.textContent = message;
+      els.feedbackBox.className = "feedback " + kind;
+    }
+
+    function clearFeedback() {
+      els.feedbackBox.textContent = "";
+      els.feedbackBox.className = "feedback";
+    }
+
+    function getCurrentWord() {
+      return state.activeWords[state.index];
+    }
+
+    function updateStaticTexts() {
+      els.title.textContent = t.title;
+      els.subtitle.textContent = t.subtitle;
+      els.chooseModeText.textContent = t.chooseMode;
+      els.studentNameLabel.textContent = t.studentNameLabel;
+      els.studentNameInput.placeholder = t.studentNamePlaceholder;
+      els.testBtn.textContent = t.test;
+      els.practiceBtn.textContent = t.practice;
+      els.progressLabel.textContent = t.progress;
+      els.englishWordLabel.textContent = t.englishWord;
+      els.answerInput.placeholder = t.inputPlaceholder;
+      els.checkBtn.textContent = t.check;
+      els.hintBtn.textContent = t.hint;
+      els.restartBtn.textContent = t.restart;
+      els.retryMistakesBtn.textContent = t.retryMistakes;
+      els.backModesBtn.textContent = t.backToModes;
+      els.printCertBtn.textContent = t.printCert;
+      els.sendTeacherBtn.textContent = t.sendTeacher;
+      els.teacherBoxTitle.textContent = t.teacherBoxTitle;
+      els.teacherEmailInput.placeholder = t.teacherEmailPlaceholder;
+      els.teacherNameInput.placeholder = t.teacherNamePlaceholder;
+      els.mistakesLabel.textContent = t.mistakes;
+      els.wordsCountLabel.textContent = t.wordsCount;
+    }
+
+    function render() {
+      updateStaticTexts();
+      els.modeScreen.style.display = state.mode ? "none" : "block";
+      els.gameScreen.style.display = state.mode ? "block" : "none";
+      if (!state.mode) return;
+
+      els.modeChip.textContent = t.mode + ": " + getModeLabel();
+      els.retryChip.style.display = state.retryMode ? "block" : "none";
+      els.retryChip.textContent = t.retryMode;
+      els.studentChip.textContent = getStudentName();
+
+      const shownIndex = state.done ? state.activeWords.length : state.index + 1;
+      els.progressCount.textContent = shownIndex + " / " + state.activeWords.length;
+      els.progressBar.style.width = ((shownIndex / state.activeWords.length) * 100) + "%";
+
+      els.scoreLabel.textContent = state.retryMode ? t.scoreOriginal : t.scoreCurrent;
+      els.scoreValue.textContent = state.finalScore ?? state.score;
+      els.mistakesValue.textContent = state.mistakeCount;
+      els.wordsCountValue.textContent = words.length;
+
+      els.playSection.style.display = state.done ? "none" : "block";
+      els.doneSection.style.display = state.done ? "block" : "none";
+
+      if (!state.done) {
+        const current = getCurrentWord();
+        els.currentWord.textContent = current.en;
+      } else {
+        els.retryMistakesBtn.disabled = state.mistakes.length === 0 || state.retryMode;
+        els.retryMistakesBtn.className = state.mistakes.length === 0 || state.retryMode ? "btn-muted" : "btn-orange";
+      }
+    }
+
+    function startMode(selectedMode) {
+      state.studentName = els.studentNameInput.value.trim();
+      state.teacherEmail = els.teacherEmailInput.value.trim();
+      state.teacherName = els.teacherNameInput.value.trim() || "Ali Dallasheh";
+      state.mode = selectedMode;
+      state.activeWords = [...words];
+      state.index = 0;
+      state.score = 0;
+      state.finalScore = null;
+      state.mistakes = [];
+      state.mistakeCount = 0;
+      state.done = false;
+      state.retryMode = false;
+      resetForNext();
+      render();
+      els.answerInput.focus();
+    }
+
+    function finishGame(message) {
+      state.done = true;
+      els.doneMessage.textContent = message;
+      fillCertificate();
+      render();
+    }
+
+    function checkAnswer() {
+      const answer = els.answerInput.value;
+      const current = getCurrentWord();
+      if (!answer.trim() || !current) return;
+
+      const result = isAcceptableAnswer(answer, current.he);
+
+      if (result.ok && result.exact) {
+        if (!state.retryMode) state.score += 1;
+        setFeedback(t.exactCorrect, "ok");
+      } else if (result.ok) {
+        if (!state.retryMode) state.score += 1;
+        setFeedback(t.nearCorrectPrefix + current.he, "ok");
+      } else {
+        if (!state.retryMode) {
+          state.mistakes.push(current);
+          state.mistakeCount += 1;
+        }
+        setFeedback(t.wrongPrefix + current.he, "bad");
+      }
+
+      setTimeout(() => {
+        if (state.index < state.activeWords.length - 1) {
+          state.index += 1;
+          resetForNext();
+          render();
+          els.answerInput.focus();
+        } else {
+          const calculatedFinalScore = state.retryMode ? state.finalScore : state.score;
+          if (!state.retryMode) state.finalScore = calculatedFinalScore;
+          finishGame(
+            state.retryMode
+              ? t.doneRetryPrefix + state.finalScore + " / " + words.length
+              : t.doneFinalPrefix + calculatedFinalScore + " / " + words.length
+          );
+        }
+      }, 900);
+    }
+
+    function retryMistakesOnly() {
+      if (state.mistakes.length === 0) return;
+      state.activeWords = [...state.mistakes];
+      state.index = 0;
+      state.done = false;
+      state.retryMode = true;
+      resetForNext();
+      render();
+      els.answerInput.focus();
+    }
+
+    function restartCurrentMode() {
+      if (!state.mode) return;
+      startMode(state.mode);
+    }
+
+    function backToModes() {
+      state.mode = null;
+      state.activeWords = [...words];
+      state.index = 0;
+      state.score = 0;
+      state.finalScore = null;
+      state.mistakes = [];
+      state.mistakeCount = 0;
+      state.done = false;
+      state.retryMode = false;
+      resetForNext();
+      render();
+    }
+
+    function printCertificate() {
+      fillCertificate();
+      window.print();
+    }
+
+    function buildTeacherMessage() {
+      const data = getCertificateData();
+      return [
+        t.shareMessageTitle,
+        "",
+        "שם תלמיד: " + data.studentName,
+        "מצב: " + data.mode,
+        "ציון: " + data.score + " / " + data.total,
+        "טעויות: " + data.mistakes,
+        "תאריך: " + data.date,
+        "",
+        data.message,
+        "",
+        "Created By: Ali Dallasheh Systems 2026"
+      ].join("\n");
+    }
+
+    function sendToTeacher() {
+      state.teacherEmail = els.teacherEmailInput.value.trim();
+      state.teacherName = els.teacherNameInput.value.trim() || state.teacherName || "Ali Dallasheh";
+      fillCertificate();
+
+      if (!state.teacherEmail) {
+        alert(t.noTeacherEmail);
+        return;
+      }
+
+      const subject = encodeURIComponent(t.emailSubject + " - " + getStudentName());
+      const body = encodeURIComponent(buildTeacherMessage());
+      const mailtoUrl = "mailto:" + state.teacherEmail + "?subject=" + subject + "&body=" + body;
+      window.location.href = mailtoUrl;
+    }
+
+    els.testBtn.addEventListener("click", () => startMode("test"));
+    els.practiceBtn.addEventListener("click", () => startMode("practice"));
+    els.checkBtn.addEventListener("click", checkAnswer);
+    els.hintBtn.addEventListener("click", () => {
+      const current = getCurrentWord();
+      if (!current || state.done) return;
+      els.hintText.style.display = "block";
+      els.hintText.textContent = t.hintPrefix + current.hint;
+    });
+    els.restartBtn.addEventListener("click", restartCurrentMode);
+    els.retryMistakesBtn.addEventListener("click", retryMistakesOnly);
+    els.backModesBtn.addEventListener("click", backToModes);
+    els.printCertBtn.addEventListener("click", printCertificate);
+    els.sendTeacherBtn.addEventListener("click", sendToTeacher);
+    els.answerInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") checkAnswer();
+    });
+
+    render();
+  </script>
+</body>
+</html>
